@@ -3,19 +3,12 @@ requests==2.31.0
 beautifulsoup4==4.12.3
 lxml==5.1.0
 
-# AI/ML - HuggingFace Transformers
+# AI/ML - Simplified for Python 3.13
 transformers==4.36.2
-torch==2.1.2
-sentencepiece==0.1.99
+torch>=2.0.0
 
 # Language Detection
 langdetect==1.0.9
 
-# Database
-# (SQLite is built into Python, no package needed)
-
 # Web Application
 streamlit==1.29.0
-
-# Utilities
-python-dotenv==1.0.0
