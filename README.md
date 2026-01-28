@@ -20,20 +20,35 @@ An intelligent web application that:
 
 ## Tech Stack
 
-- **Python 3.9+**: Core programming language
-- **BeautifulSoup4**: Web scraping and HTML parsing
+### Data Collection
+
+- **Python 3.11**: Core programming language
 - **Requests**: HTTP requests to news websites
-- **HuggingFace Transformers**: State-of-the-art translation and summarization models
-- **SQLite**: Efficient caching of processed articles
-- **Streamlit**: Interactive web application interface
+- **BeautifulSoup4**: Web scraping and HTML parsing
+
+### AI/ML (Coming Soon)
+
+- **HuggingFace Transformers**: Translation and summarization models
+- **PyTorch**: Deep learning framework
+- **LangDetect**: Language detection
+
+### Application Layer (Coming Soon)
+
+- **SQLite**: Caching processed articles
+- **Streamlit**: Interactive web interface
+
+## Current Features
+
+### Web Scraping
+
+- Extract article title, body text, and publication date
+- Support for multiple HTML structures
+- Respectful rate limiting (1-3 seconds delay between requests)
+- Error handling for network issues
 
 ## Use Case
 
 Initially developed to address news accessibility in Lebanon's trilingual ecosystem, but designed to work for any multilingual news region.
-
-## Project Status
-
-**In Development** - Building as part of ML engineering portfolio
 
 ## Installation
 
@@ -42,16 +57,32 @@ Initially developed to address news accessibility in Lebanon's trilingual ecosys
 git clone https://github.com/perlathebian/multilingual-ai-news-summarizer.git
 cd multilingual-ai-news-summarizer
 
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
-
-# Run application (coming soon)
-streamlit run app.py
 ```
 
-## Features Roadmap
+## Usage
+
+### Test the Scraper
+
+```bash
+# Edit scraper.py and update the test_url with an actual article URL
+python scraper.py
+```
+
+## Development Roadmap
 
 - [x] Project structure and setup
+- [x] Single-source web scraping
 - [ ] Multi-source web scraping
 - [ ] Language detection
 - [ ] Arabic ↔ English translation
@@ -60,3 +91,21 @@ streamlit run app.py
 - [ ] SQLite caching layer
 - [ ] Interactive Streamlit UI
 - [ ] Cloud deployment
+
+## Project Structure
+
+```
+multilingual-ai-news-summarizer/
+├── scraper.py          # Web scraping logic
+├── pipeline.py         # AI translation/summarization (coming soon)
+├── db.py              # SQLite database functions (coming soon)
+├── app.py             # Streamlit web app (coming soon)
+├── requirements.txt   # Python dependencies
+└── README.md          # This file
+```
+
+## Author
+
+Perla Thebian - [GitHub](https://github.com/perlathebian)
+
+Built to demonstrate production-ready ML engineering skills.
