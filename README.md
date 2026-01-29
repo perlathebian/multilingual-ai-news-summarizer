@@ -39,15 +39,30 @@ An intelligent web application that:
 
 ## Current Features
 
-### Web Scraping (Naharnet.com)
+### Multi-Source Web Scraping
 
-- Extracts article title from `<h1 itemprop="name">`
-- Extracts article body from `<div itemprop="description">`
-- Extracts publication date from `<abbr class="timeago">`
-- Filters out short text (ads, captions, navigation)
-- Respectful rate limiting (1-3 seconds delay between requests)
-- 350-second timeout for slow servers
+**Supported Sources:**
+
+- **Naharnet** (naharnet.com)
+- **MTV Lebanon** (mtv.com.lb)
+- **Beirut Today** (beirut-today.com)
+
+**Extraction Capabilities:**
+
+- Article title with multiple fallback patterns
+- Full article text with paragraph filtering (removes ads/captions)
+- Publication dates
+- Site-specific HTML parsing
+- Automatic source detection via URL
+
+**Technical Features:**
+
+- Modular architecture with site-specific scrapers
+- DRY principle with shared helper functions
+- Rate limiting (3 second delays)
+- 50-second timeout for slow servers
 - Comprehensive error handling
+- Text cleaning (removes social media buttons, ads)
 
 ## Use Case
 
@@ -86,7 +101,7 @@ python scraper.py
 
 - [x] Project structure and setup
 - [x] Single-source web scraping
-- [ ] Multi-source web scraping
+- [x] Multi-source web scraping (3 sources)
 - [ ] Language detection
 - [ ] Arabic ↔ English translation
 - [ ] French ↔ English translation
@@ -100,6 +115,7 @@ python scraper.py
 ```
 multilingual-ai-news-summarizer/
 ├── scraper.py          # Web scraping logic
+├── test_sites.py       # Site compatibility testing script
 ├── pipeline.py         # AI translation/summarization (coming soon)
 ├── db.py              # SQLite database functions (coming soon)
 ├── app.py             # Streamlit web app (coming soon)
