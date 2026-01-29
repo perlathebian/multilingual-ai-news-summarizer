@@ -39,12 +39,15 @@ An intelligent web application that:
 
 ## Current Features
 
-### Web Scraping
+### Web Scraping (Naharnet.com)
 
-- Extract article title, body text, and publication date
-- Support for multiple HTML structures
+- Extracts article title from `<h1 itemprop="name">`
+- Extracts article body from `<div itemprop="description">`
+- Extracts publication date from `<abbr class="timeago">`
+- Filters out short text (ads, captions, navigation)
 - Respectful rate limiting (1-3 seconds delay between requests)
-- Error handling for network issues
+- 350-second timeout for slow servers
+- Comprehensive error handling
 
 ## Use Case
 
