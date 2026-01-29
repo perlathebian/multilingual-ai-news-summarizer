@@ -14,6 +14,7 @@ HEADERS = {
 def get_article(url):
     """
     Fetch and extract article content from a given URL.
+    Currently optimized for Naharnet.com structure.
     
     Args:
         url (str): The URL of the news article
@@ -23,18 +24,18 @@ def get_article(url):
               Returns None if extraction fails
     """
     try:
-        # Add delay to be respectful to the server
-        time.sleep(3)
+        # Rate limiting - be respectful to server
+        time.sleep(1)
         
         # Fetch the webpage
         print(f"Fetching: {url}")
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        response.raise_for_status()  # Raise error for bad status codes
+        response = requests.get(url, headers=HEADERS, timeout=50)
+        response.raise_for_status()
         
         # Parse HTML
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Extract article data
+        # Initialize article data
         article_data = {
             'url': url,
             'title': None,
@@ -42,51 +43,45 @@ def get_article(url):
             'date': None
         }
         
-        # Try to find title (common patterns)
-        title = None
-        title = soup.find('h1')
+        # NAHARNET-SPECIFIC: Extract title from <h1 itemprop="name">
+        title = soup.find('h1', itemprop='name')
         if not title:
-            title = soup.find('h1', class_='article-title')
-        if not title:
-            title = soup.find(class_='article-title')
+            title = soup.find('h1')  # Fallback to any h1
         
         if title:
             article_data['title'] = title.get_text(strip=True)
         
-        # Try to find article body (common patterns)
-        article_body = None
+        # NAHARNET-SPECIFIC: Extract article body from <div itemprop="description">
+        article_body = soup.find('div', itemprop='description')
         
-        # Try common article body class names
-        article_body = soup.find('div', class_='article-body')
-        if not article_body:
-            article_body = soup.find('div', class_='article-content')
-        if not article_body:
-            article_body = soup.find('article')
-        if not article_body:
-            article_body = soup.find('div', class_='entry-content')
-        
-        # If we found the body, extract all paragraphs
         if article_body:
             paragraphs = article_body.find_all('p')
-            text = ' '.join([p.get_text(strip=True) for p in paragraphs])
-            article_data['text'] = text
+            
+            # Filter out short paragraphs (captions/ads)
+            text_parts = []
+            for p in paragraphs:
+                text = p.get_text(strip=True)
+                if len(text) > 50:
+                    text_parts.append(text)
+            
+            article_data['text'] = ' '.join(text_parts)
         
-        # Try to find publication date (optional)
-        date = soup.find('time')
-        if not date:
-            date = soup.find(class_='date')
-        if not date:
-            date = soup.find(class_='published')
-        
+        # NAHARNET-SPECIFIC: Extract date from <abbr class="timeago">
+        date = soup.find('abbr', class_='timeago')
         if date:
             article_data['date'] = date.get_text(strip=True)
         
         # Validate we got essential data
         if article_data['title'] and article_data['text']:
-            print(f"Successfully extracted: {article_data['title'][:50]}...")
+            print(f"Successfully extracted: {article_data['title'][:60]}...")
+            print(f"   Text length: {len(article_data['text'])} characters")
+            if article_data['date']:
+                print(f"   Date: {article_data['date']}")
             return article_data
         else:
             print("Failed to extract article content")
+            print(f"   Title found: {bool(article_data['title'])}")
+            print(f"   Text found: {bool(article_data['text'])}")
             return None
             
     except requests.exceptions.RequestException as e:
