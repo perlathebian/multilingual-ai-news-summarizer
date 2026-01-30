@@ -109,7 +109,7 @@ def translate_to_english(text, source_language):
         return text
     
     try:
-        # Arabic → English
+        # Arabic -> English
         if source_language == 'ar':
             if _translator_ar is None:
                 print(f"Loading Arabic_to_English model (first time only, ~5 min)...")
@@ -136,7 +136,7 @@ def translate_to_english(text, source_language):
             print(f"Translation complete ({len(translated)} chars)")
             return translated
         
-        # French → English
+        # French -> English
         elif source_language == 'fr':
             if _translator_fr is None:
                 print(f"Loading French→English model (first time only, ~5 min)...")
@@ -170,32 +170,155 @@ def translate_to_english(text, source_language):
 
 def summarize_text(text, max_length=150, min_length=50):
     """
-    Generate a concise summary of English text.
+    Generate a concise summary of English text using BART model.
     
     Args:
-        text (str): English text to summarize
-        max_length (int): Maximum summary length in words
-        min_length (int): Minimum summary length in words
+        text (str): English text to summarize (should be at least 200 chars)
+        max_length (int): Maximum summary length in tokens (~words)
+        min_length (int): Minimum summary length in tokens
         
     Returns:
-        str: Generated summary
+        str: Generated summary, or original text if too short/error
     """
-    # TODO: will implement in step 7
-    pass
+    global _summarizer
+    
+    # Don't summarize very short text
+    if len(text) < 200:
+        print("Text too short for summarization (< 200 chars)")
+        return text
+    
+    try:
+        # Load model on first use (cached after that)
+        if _summarizer is None:
+            print(f"Loading summarization model (first time only, ~10 min)...")
+            print(f"   Model: {SUMMARIZATION_MODEL}")
+            start_time = time.time()
+            _summarizer = pipeline("summarization", model=SUMMARIZATION_MODEL)
+            elapsed = time.time() - start_time
+            print(f"Model loaded in {elapsed:.1f} seconds")
+        
+        print(f"Generating summary...")
+        print(f"   Input length: {len(text)} characters")
+        
+        # Bart has a max input length of ~1024 tokens (~4000 chars)
+        # If text is longer, truncate it
+        if len(text) > 4000:
+            print(f"   Text is long, using first 4000 characters")
+            text = text[:4000]
+        
+        # Generate summary
+        result = _summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
+        summary = result[0]['summary_text']
+        
+        print(f"Summary generated ({len(summary)} characters)")
+        return summary
+        
+    except Exception as e:
+        print(f"Summarization error: {e}")
+        print(f"   Returning original text")
+        return text
 
 
-def process_article(article_data):
+def process_article(article_data, output_language='en', summary_max_length=150):
     """
     Complete AI pipeline: detect language → translate → summarize.
     
+    This is the master function that processes a scraped article through
+    the complete AI workflow.
+    
     Args:
-        article_data (dict): Article with 'title' and 'text' keys
+        article_data (dict): Article from scraper with 'title', 'text', 'url' keys
+        output_language (str): Desired output language ('en', 'ar', 'fr')
+                               Currently only 'en' supported
+        summary_max_length (int): Maximum summary length in tokens
         
     Returns:
-        dict: Processed article with summary and metadata
+        dict: Processed article with original data + AI enhancements:
+              {
+                  'url': original URL,
+                  'source': news source,
+                  'title': original title,
+                  'original_language': detected language,
+                  'original_text': original article text,
+                  'english_text': translated text (if not English),
+                  'summary': AI-generated summary,
+                  'processing_time': time taken to process
+              }
+              Returns None if processing fails
     """
-    # TODO: will implement in step 9
-    pass
+    print("\n" + "="*70)
+    print("PROCESSING ARTICLE THROUGH AI PIPELINE")
+    print("="*70)
+    
+    start_time = time.time()
+    
+    # Validate input
+    if not article_data or 'text' not in article_data:
+        print("Invalid article data")
+        return None
+    
+    # Initialize result
+    result = {
+        'url': article_data.get('url', 'N/A'),
+        'source': article_data.get('source', 'Unknown'),
+        'title': article_data.get('title', 'Untitled'),
+        'date': article_data.get('date', 'N/A'),
+        'original_language': None,
+        'original_text': article_data['text'],
+        'english_text': None,
+        'summary': None,
+        'processing_time': None
+    }
+    
+    print(f"\nArticle: {result['title'][:60]}...")
+    print(f"   Source: {result['source']}")
+    print(f"   URL: {result['url'][:50]}...")
+    
+    # Step 1: Detect language
+    print(f"\n{'─'*70}")
+    print("STEP 1: Language Detection")
+    print('─'*70)
+    language = detect_language(article_data['text'])
+    
+    if not language:
+        print("Language detection failed")
+        return None
+    
+    result['original_language'] = language
+    
+    # Step 2: Translate to English (if needed)
+    print(f"\n{'─'*70}")
+    print("STEP 2: Translation")
+    print('─'*70)
+    
+    if language == 'en':
+        english_text = article_data['text']
+        result['english_text'] = english_text
+    else:
+        english_text = translate_to_english(article_data['text'], language)
+        result['english_text'] = english_text
+    
+    # Step 3: Summarize
+    print(f"\n{'─'*70}")
+    print("STEP 3: Summarization")
+    print('─'*70)
+    summary = summarize_text(english_text, max_length=summary_max_length)
+    result['summary'] = summary
+    
+    # Calculate processing time
+    elapsed = time.time() - start_time
+    result['processing_time'] = f"{elapsed:.1f}s"
+    
+    # Final output
+    print(f"\n{'='*70}")
+    print("PROCESSING COMPLETE")
+    print('='*70)
+    print(f"Original language: {SUPPORTED_LANGUAGES[language]}")
+    print(f"Summary generated: {len(summary)} characters")
+    print(f"Total processing time: {result['processing_time']}")
+    print('='*70)
+    
+    return result
 
 
 # ============================================================================
@@ -204,55 +327,54 @@ def process_article(article_data):
 
 def test_pipeline():
     """
-    Test language detection and translation.
+    Test complete pipeline with a REAL scraped article.
     """
     print("="*70)
-    print("STEP 4: TRANSLATION PIPELINE TEST")
+    print("STEP 9: COMPLETE PIPELINE TEST WITH REAL ARTICLE")
     print("="*70)
     
-    # Test samples with translations
-    test_samples = [
-        {
-            'language': 'English',
-            'code': 'en',
-            'text': 'This is a test article about news in Lebanon. The economy is recovering from the crisis.'
-        },
-        {
-            'language': 'Arabic',
-            'code': 'ar',
-            'text': 'هذا مقال تجريبي عن الأخبار في لبنان. الاقتصاد يتعافى من الأزمة المالية.'
-        },
-        {
-            'language': 'French',
-            'code': 'fr',
-            'text': 'Ceci est un article de test sur les nouvelles au Liban. L\'économie se rétablit de la crise.'
-        }
-    ]
+    # Import scraper
+    from scraper import get_article
     
-    print("\nTesting language detection + translation:\n")
+    # Test with a real article URL
+    # Eng article:
+    # test_url = "https://www.naharnet.com/stories/en/317898-across-forgotten-walls-of-hong-kong-island-a-flock-of-bird-murals-rises"
+    # Arabic article:
+    test_url2  = "https://beirut-today.com/ar/2023/06/02/ar-corruption-health-sector-coronavirus-lebanon/"
+
+    print(f"\nTesting with URL: {test_url2[:60]}...")
+    print(f"\nStep 1: Scraping article...")
     
-    for sample in test_samples:
-        print(f"{'─'*70}")
-        print(f"Testing: {sample['language']}")
-        print(f"Original text: {sample['text'][:60]}...")
-        print()
-        
-        # Detect language
-        detected = detect_language(sample['text'])
-        
-        if detected:
-            # Translate to English
-            translated = translate_to_english(sample['text'], detected)
-            print(f"\nTranslated text: {translated[:100]}...")
-            print(f"   Length: {len(translated)} characters")
-        else:
-            print("Detection failed, skipping translation")
-        
-        print()
+    # Scrape the article
+    article = get_article(test_url2)
     
-    print("="*70)
-    print("Translation pipeline test complete!")
-    print("="*70)
+    if not article:
+        print("Scraping failed")
+        return
+    
+    print(f"Article scraped successfully")
+    print(f"   Title: {article['title'][:60]}...")
+    print(f"   Source: {article.get('source', 'N/A')}")
+    print(f"   Text length: {len(article['text']):,} characters")
+    
+    # Process through AI pipeline
+    print(f"\nStep 2: Processing through AI pipeline...")
+    result = process_article(article, summary_max_length=120)
+    
+    if result:
+        print(f"\n{'='*70}")
+        print("FINAL RESULT")
+        print('='*70)
+        print(f"\nTitle: {result['title']}")
+        print(f"Original Language: {SUPPORTED_LANGUAGES[result['original_language']]}")
+        print(f"Date: {result['date']}")
+        print(f"\nSUMMARY:")
+        print(f"{result['summary']}")
+        print(f"\nProcessing Time: {result['processing_time']}")
+        print('='*70)
+    else:
+        print("Processing failed")
+
 
 if __name__ == "__main__":
     test_pipeline()
