@@ -119,7 +119,7 @@ def translate_to_english(text, source_language):
                 elapsed = time.time() - start_time
                 print(f"Model loaded in {elapsed:.1f} seconds")
             
-            print("Translating Arabic → English...")
+            print("Translating Arabic to English...")
             # Translate in chunks if text is long (model has max length)
             if len(text) > 500:
                 # Split into chunks and translate
@@ -139,14 +139,14 @@ def translate_to_english(text, source_language):
         # French -> English
         elif source_language == 'fr':
             if _translator_fr is None:
-                print(f"Loading French→English model (first time only, ~5 min)...")
+                print(f"Loading French_to_English model (first time only, ~5 min)...")
                 print(f"   Model: {TRANSLATION_MODELS['fr']}")
                 start_time = time.time()
                 _translator_fr = pipeline("translation", model=TRANSLATION_MODELS['fr'])
                 elapsed = time.time() - start_time
                 print(f"Model loaded in {elapsed:.1f} seconds")
             
-            print("Translating French → English...")
+            print("Translating French to English...")
             # Translate in chunks if text is long
             if len(text) > 500:
                 chunks = [text[i:i+500] for i in range(0, len(text), 500)]
@@ -221,7 +221,7 @@ def summarize_text(text, max_length=150, min_length=50):
 
 def process_article(article_data, output_language='en', summary_max_length=150):
     """
-    Complete AI pipeline: detect language → translate → summarize.
+    Complete AI pipeline: detect language -> translate -> summarize.
     
     This is the master function that processes a scraped article through
     the complete AI workflow.
@@ -327,54 +327,97 @@ def process_article(article_data, output_language='en', summary_max_length=150):
 
 def test_pipeline():
     """
-    Test complete pipeline with a REAL scraped article.
+    Test complete pipeline with multiple real articles from different sources.
     """
     print("="*70)
-    print("STEP 9: COMPLETE PIPELINE TEST WITH REAL ARTICLE")
+    print("STEP 10: MULTI-SOURCE PIPELINE TEST")
     print("="*70)
     
     # Import scraper
     from scraper import get_article
     
-    # Test with a real article URL
-    # Eng article:
-    # test_url = "https://www.naharnet.com/stories/en/317898-across-forgotten-walls-of-hong-kong-island-a-flock-of-bird-murals-rises"
-    # Arabic article:
-    test_url2  = "https://beirut-today.com/ar/2023/06/02/ar-corruption-health-sector-coronavirus-lebanon/"
-
-    print(f"\nTesting with URL: {test_url2[:60]}...")
-    print(f"\nStep 1: Scraping article...")
+    # Test articles from different sources
+    # Replace with your actual article URLs
+    test_articles = [
+        {
+            'name': 'Naharnet (English)',
+            'url': 'https://www.naharnet.com/stories/en/317898-across-forgotten-walls-of-hong-kong-island-a-flock-of-bird-murals-rises'
+        },
+        {
+            'name': 'MTV Lebanon (English)',
+            'url': 'https://www.mtv.com.lb/en/news/International/1628094/uk-court-jails-chinese-bitcoin-fraudster-for-over-11-years'
+        },
+        {
+            'name': 'Beirut Today (Arabic)',
+            'url': 'https://beirut-today.com/ar/2023/06/02/ar-corruption-health-sector-coronavirus-lebanon/'
+        },
+    ]
     
-    # Scrape the article
-    article = get_article(test_url2)
+    print(f"\nTesting pipeline with {len(test_articles)} articles from different sources...")
+    print(f"This will take ~40-120 seconds (models already cached)\n")
     
-    if not article:
-        print("Scraping failed")
-        return
+    results = []
     
-    print(f"Article scraped successfully")
-    print(f"   Title: {article['title'][:60]}...")
-    print(f"   Source: {article.get('source', 'N/A')}")
-    print(f"   Text length: {len(article['text']):,} characters")
-    
-    # Process through AI pipeline
-    print(f"\nStep 2: Processing through AI pipeline...")
-    result = process_article(article, summary_max_length=120)
-    
-    if result:
+    for i, test_article in enumerate(test_articles, 1):
         print(f"\n{'='*70}")
-        print("FINAL RESULT")
+        print(f"TEST {i}/{len(test_articles)}: {test_article['name']}")
         print('='*70)
-        print(f"\nTitle: {result['title']}")
-        print(f"Original Language: {SUPPORTED_LANGUAGES[result['original_language']]}")
-        print(f"Date: {result['date']}")
-        print(f"\nSUMMARY:")
-        print(f"{result['summary']}")
-        print(f"\nProcessing Time: {result['processing_time']}")
-        print('='*70)
-    else:
-        print("Processing failed")
-
+        
+        # Scrape article
+        article = get_article(test_article['url'])
+        
+        if not article:
+            print(f"Scraping failed for {test_article['name']}")
+            results.append({
+                'name': test_article['name'],
+                'success': False
+            })
+            continue
+        
+        # Process through pipeline
+        result = process_article(article, summary_max_length=100)
+        
+        if result:
+            results.append({
+                'name': test_article['name'],
+                'success': True,
+                'language': SUPPORTED_LANGUAGES[result['original_language']],
+                'summary_length': len(result['summary']),
+                'processing_time': result['processing_time']
+            })
+            
+            # Show brief result
+            print(f"\nSUCCESS")
+            print(f"   Language: {SUPPORTED_LANGUAGES[result['original_language']]}")
+            print(f"   Summary: {result['summary'][:100]}...")
+        else:
+            results.append({
+                'name': test_article['name'],
+                'success': False
+            })
+            print(f"Processing failed")
+    
+    # Summary report
+    print(f"\n{'='*70}")
+    print("FINAL SUMMARY REPORT")
+    print('='*70)
+    
+    successful = [r for r in results if r.get('success')]
+    failed = [r for r in results if not r.get('success')]
+    
+    print(f"\nSuccessful: {len(successful)}/{len(results)}")
+    for r in successful:
+        print(f"   {r['name']}")
+        print(f"     Language: {r['language']}, Time: {r['processing_time']}")
+    
+    if failed:
+        print(f"\nFailed: {len(failed)}/{len(results)}")
+        for r in failed:
+            print(f"   {r['name']}")
+    
+    print(f"\n{'='*70}")
+    print("Multi-source pipeline test complete!")
+    print('='*70)
 
 if __name__ == "__main__":
     test_pipeline()
