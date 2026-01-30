@@ -6,6 +6,7 @@ lxml==5.1.0
 # AI/ML - Simplified for Python 3.13
 transformers==4.36.2
 torch>=2.0.0
+sentencepiece==0.2.1
 
 # Language Detection
 langdetect==1.0.9
