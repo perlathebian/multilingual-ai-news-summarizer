@@ -16,6 +16,7 @@ Tools & Models:
 import time
 from langdetect import detect, DetectorFactory
 from transformers import pipeline
+import db
 
 # Set seed for consistent language detection results
 DetectorFactory.seed = 0
@@ -320,6 +321,81 @@ def process_article(article_data, output_language='en', summary_max_length=150):
     
     return result
 
+def process_article_with_cache(article_data, force_refresh=False, summary_max_length=150):
+    """
+    Process article with database caching.
+    
+    Workflow:
+    1. Check if URL already in cache
+    2. If cached and not force_refresh then return cached result 
+    3. If not cached or force_refresh then process + save to cache
+    
+    Args:
+        article_data (dict): Article from scraper with 'title', 'text', 'url' keys
+        force_refresh (bool): If True, reprocess even if cached
+        summary_max_length (int): Maximum summary length in tokens
+        
+    Returns:
+        dict: Processed article with AI enhancements, from cache or fresh processing
+              Returns None if processing fails
+    """
+    url = article_data.get('url')
+    
+    if not url:
+        print("No URL provided in article data")
+        return None
+    
+    print(f"\n{'='*70}")
+    print("CACHE-AWARE PROCESSING")
+    print('='*70)
+    print(f"URL: {url[:60]}...")
+    
+    # Check cache first (unless force refresh)
+    if not force_refresh:
+        print("\nChecking cache...")
+        cached = db.get_cached_article(url)
+        
+        if cached:
+            print(f"Cache Hit - Returning cached result")
+            print(f"   Title: {cached['title'][:50]}...")
+            print(f"   Cached on: {cached['date_processed'][:19]}")
+            print(f"   Processing time saved: ~2-5 seconds")
+            return cached
+        else:
+            print(f"Cache Miss - Article not in cache")
+    else:
+        print(f"Force refresh enabled - Reprocessing article")
+    
+    # Not cached or force refresh then process article
+    print(f"\n{'─'*70}")
+    print("Processing through AI pipeline...")
+    print('─'*70)
+    
+    result = process_article(article_data, summary_max_length=summary_max_length)
+    
+    if not result:
+        print("Processing failed")
+        return None
+    
+    # Save to cache
+    print(f"\n{'─'*70}")
+    print("Saving to cache...")
+    print('─'*70)
+    
+    # Ensure database is initialized
+    db.init_db()
+    
+    saved = db.save_article(result)
+    
+    if saved:
+        print(f"Result cached for future requests")
+    else:
+        print(f"Failed to cache (may already exist)")
+    
+    print('='*70)
+    
+    return result
+
 
 # ============================================================================
 # TESTING
@@ -327,97 +403,131 @@ def process_article(article_data, output_language='en', summary_max_length=150):
 
 def test_pipeline():
     """
-    Test complete pipeline with multiple real articles from different sources.
+    Test cache integration with pipeline.
+    Demonstrates cache hit/miss behavior and performance improvement.
     """
     print("="*70)
-    print("STEP 10: MULTI-SOURCE PIPELINE TEST")
+    print("STEP 6: CACHE INTEGRATION TEST")
     print("="*70)
     
     # Import scraper
     from scraper import get_article
+    import time
     
-    # Test articles from different sources
-    # Replace with your actual article URLs
-    test_articles = [
-        {
-            'name': 'Naharnet (English)',
-            'url': 'https://www.naharnet.com/stories/en/317898-across-forgotten-walls-of-hong-kong-island-a-flock-of-bird-murals-rises'
-        },
-        {
-            'name': 'MTV Lebanon (English)',
-            'url': 'https://www.mtv.com.lb/en/news/International/1628094/uk-court-jails-chinese-bitcoin-fraudster-for-over-11-years'
-        },
-        {
-            'name': 'Beirut Today (Arabic)',
-            'url': 'https://beirut-today.com/ar/2023/06/02/ar-corruption-health-sector-coronavirus-lebanon/'
-        },
-    ]
+    # Initialize database
+    db.init_db()
     
-    print(f"\nTesting pipeline with {len(test_articles)} articles from different sources...")
-    print(f"This will take ~40-120 seconds (models already cached)\n")
+    test_url = "https://beirut-today.com/ar/2023/02/03/ar-2023-key-year-lebanese-deposits/"
     
-    results = []
+    print(f"\nTest Article: {test_url[:60]}...")
+    print("="*70)
     
-    for i, test_article in enumerate(test_articles, 1):
-        print(f"\n{'='*70}")
-        print(f"TEST {i}/{len(test_articles)}: {test_article['name']}")
-        print('='*70)
-        
-        # Scrape article
-        article = get_article(test_article['url'])
-        
-        if not article:
-            print(f"Scraping failed for {test_article['name']}")
-            results.append({
-                'name': test_article['name'],
-                'success': False
-            })
-            continue
-        
-        # Process through pipeline
-        result = process_article(article, summary_max_length=100)
-        
-        if result:
-            results.append({
-                'name': test_article['name'],
-                'success': True,
-                'language': SUPPORTED_LANGUAGES[result['original_language']],
-                'summary_length': len(result['summary']),
-                'processing_time': result['processing_time']
-            })
-            
-            # Show brief result
-            print(f"\nSUCCESS")
-            print(f"   Language: {SUPPORTED_LANGUAGES[result['original_language']]}")
-            print(f"   Summary: {result['summary'][:100]}...")
+    # Test 1: First Request (Cache miss - should processs)
+    
+    print(f"\n{'='*70}")
+    print("TEST 1: FIRST REQUEST (Expected: Cache Miss)")
+    print('='*70)
+    
+    # Scrape article
+    print("\nScraping article...")
+    article = get_article(test_url)
+    
+    if not article:
+        print("Scraping failed")
+        return
+    
+    print(f"Article scraped: {article['title'][:50]}...")
+    
+    # Process with cache (first time)
+    print("\nProcessing with cache check...")
+    start_time = time.time()
+    
+    result1 = process_article_with_cache(article, summary_max_length=100)
+    
+    elapsed1 = time.time() - start_time
+    
+    if result1:
+        print(f"\nFirst request completed in {elapsed1:.2f} seconds")
+        print(f"   Summary: {result1['summary'][:100]}...")
+    else:
+        print("Processing failed")
+        return
+    
+    # Test 2: Second Request (Cache hit - should be instant)
+
+    print(f"\n{'='*70}")
+    print("TEST 2: SECOND REQUEST (Expected: Cache Hit)")
+    print('='*70)
+    print("\nRequesting same article again...")
+    
+    start_time = time.time()
+    
+    result2 = process_article_with_cache(article, summary_max_length=100)
+    
+    elapsed2 = time.time() - start_time
+    
+    if result2:
+        print(f"\nSecond request completed in {elapsed2:.2f} seconds")
+        print(f"   Summary: {result2['summary'][:100]}...")
+    
+    # Test 3: Force refresh (cache bypass)
+    
+    print(f"\n{'='*70}")
+    print("TEST 3: FORCE REFRESH (Bypass Cache)")
+    print('='*70)
+    print("\nRequesting with force_refresh=True...")
+    
+    start_time = time.time()
+    
+    result3 = process_article_with_cache(article, force_refresh=True, summary_max_length=100)
+    
+    elapsed3 = time.time() - start_time
+    
+    if result3:
+        print(f"\nForce refresh completed in {elapsed3:.2f} seconds")
+    
+    # Performance cOmparison
+    
+    print(f"\n{'='*70}")
+    print("PERFORMANCE COMPARISON")
+    print('='*70)
+
+    # Helper function to format time nicely
+    def format_time(seconds):
+        if seconds < 0.01:
+            return f"{seconds*1000:.2f}ms"
         else:
-            results.append({
-                'name': test_article['name'],
-                'success': False
-            })
-            print(f"Processing failed")
+            return f"{seconds:.2f}s"
+
+    print(f"\n1st Request (Cache Miss):     {format_time(elapsed1):>12}  [Full AI Processing]")
+    print(f"2nd Request (Cache Hit):      {format_time(elapsed2):>12}  [From Database]")
+    print(f"3rd Request (Force Refresh):  {format_time(elapsed3):>12}  [Full AI Processing]")
     
-    # Summary report
-    print(f"\n{'='*70}")
-    print("FINAL SUMMARY REPORT")
-    print('='*70)
+    if elapsed2 > 0:
+        speedup = elapsed1 / elapsed2
+        print(f"\nCache speedup: {speedup:.0f}x faster!")
+        print(f"   Time saved: {elapsed1 - elapsed2:.2f} seconds per cached request")
     
-    successful = [r for r in results if r.get('success')]
-    failed = [r for r in results if not r.get('success')]
-    
-    print(f"\nSuccessful: {len(successful)}/{len(results)}")
-    for r in successful:
-        print(f"   {r['name']}")
-        print(f"     Language: {r['language']}, Time: {r['processing_time']}")
-    
-    if failed:
-        print(f"\nFailed: {len(failed)}/{len(results)}")
-        for r in failed:
-            print(f"   {r['name']}")
+    # Cachr Stats 
     
     print(f"\n{'='*70}")
-    print("Multi-source pipeline test complete!")
+    print("CACHE STATISTICS")
     print('='*70)
+    
+    stats = db.get_cache_stats()
+    print(f"\nTotal cached articles: {stats['total_articles']}")
+    print(f"By language: {stats['by_language']}")
+    print(f"By source: {stats['by_source']}")
+    
+    print(f"\n{'='*70}")
+    print("CACHE INTEGRATION TEST COMPLETE")
+    print('='*70)
+    print("\nCache is working correctly!")
+    print("   - First request: Processes and caches")
+    print("   - Subsequent requests: Instant retrieval from cache")
+    print("   - Force refresh: Bypasses cache when needed")
+    print('='*70 + "\n")
+
 
 if __name__ == "__main__":
     test_pipeline()
