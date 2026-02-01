@@ -198,20 +198,27 @@ def summarize_text(text, max_length=150, min_length=50):
             elapsed = time.time() - start_time
             print(f"Model loaded in {elapsed:.1f} seconds")
         
-        print(f"Generating summary...")
-        print(f"   Input length: {len(text)} characters")
-        
         # Bart has a max input length of ~1024 tokens (~4000 chars)
         # If text is longer, truncate it
         if len(text) > 4000:
             print(f"   Text is long, using first 4000 characters")
             text = text[:4000]
         
+        # Calculate smart min_length (at least 70% of max_length to force longer summaries)
+        smart_min_length = max(min_length, int(max_length * 0.9))
+
+        print(f"Generating summary...")
+        print(f"   Input length: {len(text)} characters")
+        print(f"   Target length: {smart_min_length}-{max_length} tokens")
+
         # Generate summary
-        result = _summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
+        result = _summarizer(text, max_length=max_length, min_length=smart_min_length, do_sample=False)
         summary = result[0]['summary_text']
         
-        print(f"Summary generated ({len(summary)} characters)")
+        # Count words in summary
+        word_count = len(summary.split())
+
+        print(f"Summary generated ({len(summary)} characters, ~{word_count} words)")
         return summary
         
     except Exception as e:
@@ -247,6 +254,9 @@ def process_article(article_data, output_language='en', summary_max_length=150):
               }
               Returns None if processing fails
     """
+    # DEBUG
+    print(f"process_article received: summary_max_length={summary_max_length}")
+
     print("\n" + "="*70)
     print("PROCESSING ARTICLE THROUGH AI PIPELINE")
     print("="*70)
@@ -339,6 +349,8 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
         dict: Processed article with AI enhancements, from cache or fresh processing
               Returns None if processing fails
     """
+    # DEBUG
+    print(f"process_article_with_cache received: summary_max_length={summary_max_length}")
     url = article_data.get('url')
     
     if not url:
@@ -381,18 +393,29 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
     print(f"\n{'─'*70}")
     print("Saving to cache...")
     print('─'*70)
-    
-    # Ensure database is initialized
+
     db.init_db()
-    
+
+    # If force refresh, delete old cache entry first
+    if force_refresh and db.article_exists(url):
+        print("Force refresh: Removing old cache entry...")
+        # Delete old entry by deleting and reinserting
+        # Sqlite doesn't have easy UPDATE for all fields, so delete+insert is cleaner
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM articles WHERE url = ?', (url,))
+        conn.commit()
+        conn.close()
+        print("Old cache entry removed!!")
+
     saved = db.save_article(result)
-    
+
     if saved:
         print(f"Result cached for future requests")
     else:
         print(f"Failed to cache (may already exist)")
-    
-    print('='*70)
+
+    print(f"\n{'─'*70}")    
     
     return result
 
