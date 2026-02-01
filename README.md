@@ -247,6 +247,43 @@ DEMO COMPLETE
 
 </details>
 
+## Screenshots
+
+### Main Summarizer Interface
+
+![Summarizer Page](screenshot-summarizer.png)
+
+**Features:**
+
+- URL input with validation
+- Summary length control (30-200 words)
+- Force refresh option
+- Real-time processing indicators
+- Download summary as text file
+
+### Cache Explorer Dashboard
+
+![Cache Explorer](screenshot-cache-explorer.png)
+
+**Features:**
+
+- Cache statistics (total, by language, by source)
+- Expandable list of cached articles
+- Download cached summaries
+- Clear cache with confirmation
+
+### About Page
+
+![About Page](screenshot-about-1.png)
+![About Page](screenshot-about-2.png)
+
+**Features:**
+
+- Project description and use case
+- Performance metrics and benchmarks
+- Technology stack details
+- Supported news sources
+
 ## Features
 
 ### Multi-Source Web Scraping
@@ -316,6 +353,24 @@ Request → Check Cache → Found? Return (instant) : Process → Save → Retur
 - First request (cache miss): 40-90 seconds (full AI processing)
 - Repeat request (cache hit): 10-50 milliseconds (database retrieval)
 - Typical speedup: 2,000-5,000x faster
+
+### Interactive Web Interface
+
+**Streamlit UI:**
+
+- Clean, modern design with custom styling
+- Multi-page navigation (Summarizer, Cache Explorer, About)
+- Real-time processing indicators
+- Download summaries as text files
+- Mobile-responsive layout
+
+**User Experience:**
+
+- Word-based summary length control (no technical jargon)
+- Force refresh option to bypass cache
+- Article preview before processing
+- Detailed error messages with troubleshooting tips
+- Success/progress feedback throughout
 
 ## Tech Stack
 
@@ -454,7 +509,7 @@ multilingual-ai-news-summarizer/
 ├── demo.py             # Quick demo script
 ├── cache_demo.py       # Cache performance demonstration
 ├── test_sites.py       # Site compatibility testing
-├── app.py              # Streamlit UI (coming Day 5)
+├── app.py              # Streamlit UI
 ├── requirements.txt    # Python dependencies
 ├── articles.db         # SQLite database (auto-generated, not in git)
 └── README.md           # This file
@@ -471,7 +526,11 @@ multilingual-ai-news-summarizer/
 - [x] Complete end-to-end pipeline
 - [x] SQLite caching layer with CRUD operations
 - [x] Cache performance demonstration
-- [ ] Interactive Streamlit UI
+- [x] Interactive Streamlit web interface
+- [x] Multi-page navigation
+- [x] Cache explorer and management
+- [x] About page with documentation
+- [x] Custom styling and UX polish
 - [ ] Cloud deployment
 - [ ] Polish and optimization
 
