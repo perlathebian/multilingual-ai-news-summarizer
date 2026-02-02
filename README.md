@@ -1,399 +1,165 @@
-# Multilingual AI News Summarizer
+# 🌍 Multilingual AI News Summarizer
 
-AI-powered news summarizer that breaks language barriers by providing intelligent summaries in multiple languages.
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Visit_App-blue?style=for-the-badge)](https://huggingface.co/spaces/perlathebian/multilingual-ai-news-summarizer)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/perlathebian/multilingual-ai-news-summarizer)
+[![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![HuggingFace](https://img.shields.io/badge/🤗_HuggingFace-Spaces-yellow?style=for-the-badge)](https://huggingface.co/spaces/perlathebian/multilingual-ai-news-summarizer)
 
-## Problem
+> **[Try the Live App →](https://huggingface.co/spaces/perlathebian/multilingual-ai-news-summarizer)**
 
-In multilingual regions, news sources publish in different languages, creating accessibility barriers. Not everyone can access important information in their preferred language.
+Transform news articles from Arabic, English, or French into concise summaries in any of these languages using state-of-the-art AI.
 
-## Solution
+---
 
-An intelligent system that:
+## Problem & Solution
 
-1. **Scrapes** news from multiple Lebanese sources
-2. **Detects** the article's language automatically (Arabic/English/French)
-3. **Translates** content to English if needed
-4. **Generates** AI-powered concise summaries
-5. **Delivers** accessible summaries regardless of original language
+**Problem:** In multilingual regions, news sources publish in different languages, creating accessibility barriers.
+
+**Solution:** An intelligent system that scrapes news, detects language, translates if needed, generates AI-powered summaries, and delivers them in the user's preferred language.
+
+---
 
 ## Quick Demo Output
 
-Want to see it in action without running the code? Here's what happens:
-
 <details>
-<summary>Click to see demo output</summary>
+<summary>Click to see example processing output</summary>
 
-**First Run (Cache Miss - Full Processing):**
+<br>
+
+**Processing an English Article (First Time - Cache Miss):**
 
 ```
-======================================================================
-MULTILINGUAL AI NEWS SUMMARIZER - DEMO
-======================================================================
+URL: https://www.mtv.com.lb/en/news/International/1628197/gold-gains...
 
-This demo shows the complete workflow:
-URL -> Scrape -> Detect Language -> Translate -> Summarize -> Cache
-
-With caching for instant repeated requests!
-
-Database initialized: c:\Users\BC\Desktop\multilingual-ai-news-summarizer\articles.db
-
-======================================================================
-DEMO 1/2
-======================================================================
-URL: https://www.mtv.com.lb/en/news/International/1628197/gold-ga...
-
-Step 1: Scraping article...
-Fetching: https://www.mtv.com.lb/en/news/International/1628197/gold-gains-as-traders-bet-delayed-u-s--data-will-strengthen-rate-cut-outlook
-Successfully extracted from MTV Lebanon
-   Title: Gold gains as traders bet delayed U.S. data will strengthen ...
-   Text length: 1,823 characters
-   Date: 12 Nov 202511:52 AM
-Article scraped in 7.47s
-   Title: Gold gains as traders bet delayed U.S. data will strengthen ...
-   Source: MTV Lebanon
+Step 1: Scraping article... (7.47s)
+    Successfully extracted from MTV Lebanon
+   Title: Gold gains as traders bet delayed U.S. data will strengthen...
    Text length: 1,823 characters
 
-Step 2: Processing through AI pipeline...
-   (Checking cache first...)
+Step 2: Language Detection
+    Detected language: English (en)
 
-======================================================================
-CACHE-AWARE PROCESSING
-======================================================================
-URL: https://www.mtv.com.lb/en/news/International/1628197/gold-ga...
-
-Checking cache...
-Cache miss: https://www.mtv.com.lb/en/news/International/16281...
-Cache Miss - Article not in cache
-
-──────────────────────────────────────────────────────────────────────
-Processing through AI pipeline...
-──────────────────────────────────────────────────────────────────────
-
-======================================================================
-PROCESSING ARTICLE THROUGH AI PIPELINE
-======================================================================
-
-Article: Gold gains as traders bet delayed U.S. data will strengthen ...
-   Source: MTV Lebanon
-   URL: https://www.mtv.com.lb/en/news/International/16281...
-
-──────────────────────────────────────────────────────────────────────
-STEP 1: Language Detection
-──────────────────────────────────────────────────────────────────────
-Detected language: English (en)
-
-──────────────────────────────────────────────────────────────────────
-STEP 2: Translation
-──────────────────────────────────────────────────────────────────────
-
-──────────────────────────────────────────────────────────────────────
-STEP 3: Summarization
-──────────────────────────────────────────────────────────────────────
-Loading summarization model (first time only, ~10 min)...
-   Model: facebook/bart-large-cnn
-C:\Users\BC\Desktop\multilingual-ai-news-summarizer\venv\Lib\site-packages\huggingface_hub\file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
-  warnings.warn(
-Model loaded in 8.8 seconds
-Generating summary...
-   Input length: 1823 characters
-Summary generated (276 characters)
-
-======================================================================
-PROCESSING COMPLETE
-======================================================================
-Original language: English
-Summary generated: 276 characters
-Total processing time: 23.5s
-======================================================================
-
-──────────────────────────────────────────────────────────────────────
-Saving to cache...
-──────────────────────────────────────────────────────────────────────
-Database initialized: c:\Users\BC\Desktop\multilingual-ai-news-summarizer\articles.db
-Article saved to cache: Gold gains as traders bet delayed U.S. data will s...
-Result cached for future requests
-======================================================================
-
-──────────────────────────────────────────────────────────────────────
-FINAL RESULT
-──────────────────────────────────────────────────────────────────────
-
-Gold gains as traders bet delayed U.S. data will strengthen rate cut outlook
-Language: English
-12 Nov 202511:52 AM
+Step 3: Summarization
+    Loading BART model (first time only)... 8.8s
+    Generating summary...
+    Summary generated (276 characters)
 
 SUMMARY:
-Spot gold was up 0.1% at $4,118.58 per ounce, having earlier hit its highest since October 23. Gold, traditionally considered a safe haven, also tends to benefit in low-interest rate environments. Markets see a 64% chance of a rate cut in December, CME's FedWatch Tool showed.
+Spot gold was up 0.1% at $4,118.58 per ounce. Gold tends to benefit
+in low-interest rate environments. Markets see a 64% chance of a
+rate cut in December.
 
 Processing time: 23.50s
-Processed and cached for future requests
+ Cached for future requests
+```
 
-======================================================================
-DEMO 2/2
-======================================================================
-URL: https://beirut-today.com/ar/2022/10/19/ar-can-gas-extraction...
+**Same Article Again (Cache Hit):**
 
-Step 1: Scraping article...
-Fetching: https://beirut-today.com/ar/2022/10/19/ar-can-gas-extraction-save-lebanon-from-its-financial-collapse/
-Successfully extracted from Beirut Today
-   Title: الغاز بأفضل السيناريوهات ليس كافيًا لحل الأزمة المالية: الإص...
-   Text length: 6,145 characters
-   Date: أكتوبر 19, 2022
-Article scraped in 5.11s
-   Title: الغاز بأفضل السيناريوهات ليس كافيًا لحل الأزمة المالية: الإص...
-   Source: Beirut Today
-   Text length: 6,145 characters
+```
+Processing time: 0.02s (1,175x faster!)
+ Retrieved from cache
+```
 
-Step 2: Processing through AI pipeline...
-   (Checking cache first...)
+**Processing an Arabic Article with French Output:**
 
-======================================================================
-CACHE-AWARE PROCESSING
-======================================================================
-URL: https://beirut-today.com/ar/2022/10/19/ar-can-gas-extraction...
+```
+URL: https://beirut-today.com/ar/2022/10/19/...
 
-Checking cache...
-Cache miss: https://beirut-today.com/ar/2022/10/19/ar-can-gas-...
-Cache Miss - Article not in cache
+Step 1: Scraping article... (5.11s)
+    Title: الغاز بأفضل السيناريوهات ليس كافيًا...
 
-──────────────────────────────────────────────────────────────────────
-Processing through AI pipeline...
-──────────────────────────────────────────────────────────────────────
+Step 2: Language Detection
+    Detected language: Arabic (ar)
 
-======================================================================
-PROCESSING ARTICLE THROUGH AI PIPELINE
-======================================================================
+Step 3: Translation (Arabic → English)
+    Loading Helsinki-NLP model... 3.6s
+    Translation complete
 
-Article: الغاز بأفضل السيناريوهات ليس كافيًا لحل الأزمة المالية: الإص...
-   Source: Beirut Today
-   URL: https://beirut-today.com/ar/2022/10/19/ar-can-gas-...
+Step 4: Summarization
+    Summary generated
 
-──────────────────────────────────────────────────────────────────────
-STEP 1: Language Detection
-──────────────────────────────────────────────────────────────────────
-Detected language: Arabic (ar)
-
-──────────────────────────────────────────────────────────────────────
-STEP 2: Translation
-──────────────────────────────────────────────────────────────────────
-Loading Arabic_to_English model (first time only, ~5 min)...
-   Model: Helsinki-NLP/opus-mt-ar-en
-C:\Users\BC\Desktop\multilingual-ai-news-summarizer\venv\Lib\site-packages\transformers\models\marian\tokenization_marian.py:197: UserWarning: Recommended: pip install sacremoses.
-  warnings.warn("Recommended: pip install sacremoses.")
-Model loaded in 3.6 seconds
-Translating Arabic to English...
-Translation complete (5411 chars)
-
-──────────────────────────────────────────────────────────────────────
-STEP 3: Summarization
-──────────────────────────────────────────────────────────────────────
-Generating summary...
-   Input length: 5411 characters
-   Text is long, using first 4000 characters
-Summary generated (315 characters)
-
-======================================================================
-PROCESSING COMPLETE
-======================================================================
-Original language: Arabic
-Summary generated: 315 characters
-Total processing time: 86.3s
-======================================================================
-
-──────────────────────────────────────────────────────────────────────
-Saving to cache...
-──────────────────────────────────────────────────────────────────────
-Database initialized: c:\Users\BC\Desktop\multilingual-ai-news-summarizer\articles.db
-Article saved to cache: الغاز بأفضل السيناريوهات ليس كافيًا لحل الأزمة الم...
-Result cached for future requests
-======================================================================
-
-──────────────────────────────────────────────────────────────────────
-FINAL RESULT
-──────────────────────────────────────────────────────────────────────
-
-الغاز بأفضل السيناريوهات ليس كافيًا لحل الأزمة المالية: الإصلاح أولًا
-Language: Arabic
-أكتوبر 19, 2022
-
-SUMMARY:
-Lebanon has not entered the oil-state club as politicians try to inspire Lebanon. Politicians sell illusions to hopeful Lebanese to resolve their crises. Total's gas exploration in Block 9, where Qana's border field is located. The promised oil and gas wealth, if properly anticipated, will not fill a huge deficit.
+Step 5: Translation (English → French)
+    Loading reverse translation model...
+    Final summary in French delivered
 
 Processing time: 86.41s
-Processed and cached for future requests
-
-======================================================================
-CACHE STATISTICS
-======================================================================
-
-Total cached articles: 8
-Languages: ar, en
-Sources: Beirut Today, MTV Lebanon
-
-======================================================================
-CACHE STATISTICS
-======================================================================
-
-Total cached articles: 8
-Languages: ar, en
-Sources: Beirut Today, MTV Lebanon
-
-Sources: Beirut Today, MTV Lebanon
-
-======================================================================
-DEMO COMPLETE
-======================================================================
+ Cached for future requests
 ```
 
 </details>
+
+---
+
+## Features
+
+### Live Web Application
+
+**[Try it now!](https://huggingface.co/spaces/perlathebian/multilingual-ai-news-summarizer)** - Deployed on HuggingFace Spaces
+
+- Beautiful Streamlit interface with custom styling
+- Multi-page navigation (Summarizer, Cache Explorer, About)
+- Real-time processing indicators and error handling
+- Download summaries as text files
+- Desktop-optimized (mobile not supported)
+
+### AI/ML Pipeline
+
+- **Language Detection:** Automatic identification (Arabic/English/French)
+- **Neural Translation:** Bidirectional between all 3 languages (Helsinki-NLP models)
+- **AI Summarization:** Facebook BART-large-CNN model
+- **Adjustable Length:** 30-200 words with accurate word counting
+- **Smart Processing:** Lazy model loading, chunking for long text
+
+### Multi-Source Scraping
+
+- **Naharnet** (naharnet.com) - Lebanese news
+- **MTV Lebanon** (mtv.com.lb) - Lebanese broadcaster
+- **Beirut Today** (beirut-today.com) - Culture & news
+- DRY architecture with shared helper functions
+- Automatic source detection and site-specific parsing
+
+### Performance Optimization
+
+- **SQLite Caching:** Persistent storage with CRUD operations
+- **Smart Cache Checking:** Instant retrieval for processed articles
+- **Massive Speedup:** 1,000-10,000x faster for cached requests
+- **Shared Cache:** All users benefit from each other's requests
+
+### DevOps & Deployment
+
+- Deployed on HuggingFace Spaces (16GB RAM, CPU)
+- GitHub Actions CI/CD pipeline (auto-deploy on push)
+- Separate branches for development and deployment
+- Docker-ready architecture
+
+---
+
+## Tech Stack
+
+**Backend:** Python 3.11, Beautiful Soup, Requests, SQLite  
+**AI/ML:** HuggingFace Transformers, PyTorch, LangDetect, SentencePiece  
+**Frontend:** Streamlit with custom CSS  
+**Deployment:** HuggingFace Spaces, GitHub Actions  
+**Models:** Helsinki-NLP (translation), Facebook BART (summarization)
+
+---
 
 ## Screenshots
 
 ### Main Summarizer Interface
 
-![Summarizer Page](screenshot-summarizer.png)
-
-**Features:**
-
-- URL input with validation
-- Summary length control (30-200 words)
-- Force refresh option
-- Real-time processing indicators
-- Download summary as text file
+![Summarizer](summarizer-fr.png)
+![Summarizer](summarizer-ar.png)
 
 ### Cache Explorer Dashboard
 
-![Cache Explorer](screenshot-cache-explorer.png)
+![Cache Explorer](cache-explorer.png)
 
-**Features:**
+### About & Documentation
 
-- Cache statistics (total, by language, by source)
-- Expandable list of cached articles
-- Download cached summaries
-- Clear cache with confirmation
+![About Page](about.png)
 
-### About Page
-
-![About Page](screenshot-about-1.png)
-![About Page](screenshot-about-2.png)
-
-**Features:**
-
-- Project description and use case
-- Performance metrics and benchmarks
-- Technology stack details
-- Supported news sources
-
-## Features
-
-### Multi-Source Web Scraping
-
-**Supported Sources:**
-
-- **Naharnet** (naharnet.com) - Lebanese news
-- **MTV Lebanon** (mtv.com.lb) - Lebanese broadcaster
-- **Beirut Today** (beirut-today.com) - Lebanese culture & news
-
-**Capabilities:**
-
-- Site-specific HTML parsing with automatic source detection
-- Extracts title, full text, and publication dates
-- Rate limiting and error handling
-- DRY architecture with shared helper functions
-
-### AI-Powered Language Processing
-
-**Automatic Language Detection:**
-
-- Identifies Arabic, English, and French text
-- Statistical detection using langdetect library
-
-**Neural Machine Translation:**
-
-- Arabic -> English (Helsinki-NLP/opus-mt-ar-en)
-- French -> English (Helsinki-NLP/opus-mt-fr-en)
-- Handles long text with intelligent chunking
-
-**AI Summarization:**
-
-- BART model (facebook/bart-large-cnn) for English summarization
-- Generates concise summaries preserving key information
-- Configurable summary length
-
-**Complete Pipeline:**
-
-```
-News URL -> Scrape -> Detect Language -> Translate (if needed) -> Summarize -> Output
-```
-
-### Database Caching Layer
-
-**Performance Optimization:**
-
-- SQLite database for persistent article storage
-- Automatic cache checking before AI processing
-- Instant retrieval of previously processed articles
-- 1,000-10,000x speedup for cached requests
-
-**Cache Management:**
-
-- Duplicate prevention via URL uniqueness
-- Cache statistics and analytics
-- CRUD operations (Create, Read, Delete)
-- Persistent storage across sessions
-
-**Processing Flow:**
-
-```
-Request → Check Cache → Found? Return (instant) : Process → Save → Return
-```
-
-**Performance Metrics:**
-
-- First request (cache miss): 40-90 seconds (full AI processing)
-- Repeat request (cache hit): 10-50 milliseconds (database retrieval)
-- Typical speedup: 2,000-5,000x faster
-
-### Interactive Web Interface
-
-**Streamlit UI:**
-
-- Clean, modern design with custom styling
-- Multi-page navigation (Summarizer, Cache Explorer, About)
-- Real-time processing indicators
-- Download summaries as text files
-- Mobile-responsive layout
-
-**User Experience:**
-
-- Word-based summary length control (no technical jargon)
-- Force refresh option to bypass cache
-- Article preview before processing
-- Detailed error messages with troubleshooting tips
-- Success/progress feedback throughout
-
-## Tech Stack
-
-### Data Collection
-
-- **Python 3.11**: Core programming language
-- **Requests**: HTTP client for web scraping
-- **BeautifulSoup4**: HTML parsing and extraction
-
-### AI/ML
-
-- **HuggingFace Transformers**: State-of-the-art NLP models
-- **PyTorch**: Deep learning framework
-- **LangDetect**: Statistical language identification
-- **SentencePiece**: Neural text tokenization
-
-### Data Storage
-
-- **SQLite**: Persistent caching with CRUD operations
-
-### Coming Soon
-
-- **Streamlit**: Interactive web interface
+---
 
 ## Database Schema
 
@@ -403,7 +169,7 @@ Request → Check Cache → Found? Return (instant) : Process → Save → Retur
 | ------------------- | ------------------- | ----------------------------------------- |
 | `id`                | INTEGER PRIMARY KEY | Auto-increment ID                         |
 | `url`               | TEXT UNIQUE         | Article URL (prevents duplicates)         |
-| `source`            | TEXT                | News source (Naharnet, MTV, etc.)         |
+| `source`            | TEXT                | News source name                          |
 | `title`             | TEXT                | Article title                             |
 | `original_language` | TEXT                | Detected language (ar/en/fr)              |
 | `original_text`     | TEXT                | Full article text                         |
@@ -413,12 +179,28 @@ Request → Check Cache → Found? Return (instant) : Process → Save → Retur
 | `date_processed`    | TIMESTAMP           | When article was cached                   |
 | `processing_time`   | TEXT                | Processing duration                       |
 
-**Key Features:**
+**Key Feature:** `url` UNIQUE constraint prevents duplicate processing and enables O(1) cache lookups.
 
-- `url` has UNIQUE constraint - prevents duplicate processing
-- Automatic indexing on primary key and unique columns
-- Stores both original and processed content
-- Tracks processing metadata for analytics
+---
+
+## Performance Metrics
+
+| Metric             | Cache Miss | Cache Hit  | Improvement      |
+| ------------------ | ---------- | ---------- | ---------------- |
+| **Total Time**     | 50-90s     | 0.01-0.05s | **2,000-5,000x** |
+| Language Detection | <1s        | N/A        | -                |
+| Translation        | 1-3s       | N/A        | -                |
+| Summarization      | 40-80s     | N/A        | -                |
+| Database Retrieval | N/A        | 10-50ms    | -                |
+
+**Model Sizes:**
+
+- Arabic Translation: ~300MB
+- French Translation: ~300MB
+- Summarization: ~1.6GB
+- **Total:** ~2.2GB (downloaded once, cached forever)
+
+---
 
 ## Installation
 
@@ -429,53 +211,86 @@ cd multilingual-ai-news-summarizer
 
 # Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-**Note:** First run will download AI models (~2-3GB). This takes 10-20 minutes but only happens once.
+# Run web app
+streamlit run app.py
 
-## Usage
-
-### Quick Demo
-
-```bash
+# Or try CLI demo
 python demo.py
 ```
 
-### Scrape a Specific Article
+**First Run:** Downloads ~2GB of AI models (10-15 minutes, one-time only)
 
-```python
-from scraper import get_article
+---
 
-# Scrape an article
-article = get_article(url)
-print(article['title'])
-print(article['text'])
+## Project Structure
+
+```
+multilingual-ai-news-summarizer/
+├── app.py              # Streamlit web interface (multi-page)
+├── pipeline.py         # AI pipeline with caching
+├── scraper.py          # Multi-source web scraping
+├── db.py               # SQLite database layer (CRUD)
+├── demo.py             # CLI demo script
+├── cache_demo.py       # Cache performance demo
+├── requirements.txt    # Python dependencies
+├── articles.db         # SQLite database (auto-generated)
+└── README.md
 ```
 
-### Process Through AI Pipeline
+---
+
+## Development Roadmap
+
+**Completed Features:**
+
+- [x] Project structure and setup
+- [x] Site compatibility testing
+- [x] Multi-source web scraping (3 Lebanese sources)
+- [x] Language detection (Arabic/English/French)
+- [x] Neural machine translation (bidirectional)
+- [x] AI-powered summarization (BART)
+- [x] Multi-language summary output
+- [x] SQLite caching layer with CRUD operations
+- [x] Cache performance optimization
+- [x] Interactive Streamlit web interface
+- [x] Multi-page navigation
+- [x] Cache explorer with statistics
+- [x] About page with documentation
+- [x] Custom styling and UX polish
+- [x] Deployment to HuggingFace Spaces
+- [x] GitHub Actions CI/CD pipeline
+- [x] Live public demo
+
+**Future Enhancements:**
+
+- [ ] Mobile-responsive interface
+- [ ] Additional news sources
+- [ ] More languages (Spanish, German, etc.)
+- [ ] User authentication and personal caches
+- [ ] API endpoint for programmatic access
+
+---
+
+## Usage Examples
+
+### Basic Pipeline
 
 ```python
 from scraper import get_article
-from pipeline import process_article
+from pipeline import process_article_with_cache
 
-# Get article
-article = get_article(url)
+# Scrape and process
+article = get_article("https://www.naharnet.com/stories/en/12345")
+result = process_article_with_cache(article,
+                                     summary_max_length=150,
+                                     output_language='fr')
 
-# Process through AI pipeline
-result = process_article(article)
-
-# Access results
-print(f"Original Language: {result['original_language']}")
-print(f"Summary: {result['summary']}")
+print(result['summary'])  # French summary
 ```
 
 ### Language Detection
@@ -483,78 +298,54 @@ print(f"Summary: {result['summary']}")
 ```python
 from pipeline import detect_language
 
-language = detect_language("هذا نص عربي")  # Returns 'ar'
-language = detect_language("This is English")  # Returns 'en'
+detect_language("مرحبا")  # Returns 'ar'
+detect_language("Hello")  # Returns 'en'
 ```
 
-### Translation
+### Cache Management
 
 ```python
-from pipeline import translate_to_english
+import db
 
-# Translate Arabic
-english = translate_to_english("مرحبا", 'ar')
+# Get statistics
+stats = db.get_cache_stats()
+print(f"Total cached: {stats['total_articles']}")
 
-# Translate French
-english = translate_to_english("Bonjour", 'fr')
+# Get all cached articles
+articles = db.get_all_articles()
+
+# Clear cache
+db.clear_cache()
 ```
 
-## Project Structure
+---
 
-```
-multilingual-ai-news-summarizer/
-├── scraper.py          # Multi-source web scraping
-├── pipeline.py         # AI pipeline with caching integration
-├── db.py               # SQLite database layer (CRUD operations)
-├── demo.py             # Quick demo script
-├── cache_demo.py       # Cache performance demonstration
-├── test_sites.py       # Site compatibility testing
-├── app.py              # Streamlit UI
-├── requirements.txt    # Python dependencies
-├── articles.db         # SQLite database (auto-generated, not in git)
-└── README.md           # This file
-```
+## Limitations
 
-## Development Roadmap
+- **News Sources:** Only supports 3 Lebanese news sources
+- **Platform:** Desktop-optimized interface only (mobile not supported)
+- **Languages:** Limited to Arabic, English, French
+- **Performance:** First-time processing takes 30-90 seconds
+- **Translation:** Quality varies by content type and language pair
 
-- [x] Project structure and setup
-- [x] Site compatibility testing
-- [x] Multi-source web scraping (3 sources)
-- [x] Language detection (Arabic/English/French)
-- [x] Neural machine translation (Arabic/French to English)
-- [x] AI-powered summarization (BART model)
-- [x] Complete end-to-end pipeline
-- [x] SQLite caching layer with CRUD operations
-- [x] Cache performance demonstration
-- [x] Interactive Streamlit web interface
-- [x] Multi-page navigation
-- [x] Cache explorer and management
-- [x] About page with documentation
-- [x] Custom styling and UX polish
-- [ ] Cloud deployment
-- [ ] Polish and optimization
-
-## Models Used
-
-| Task               | Model                      | Size   |
-| ------------------ | -------------------------- | ------ |
-| Arabic Translation | Helsinki-NLP/opus-mt-ar-en | ~300MB |
-| French Translation | Helsinki-NLP/opus-mt-fr-en | ~300MB |
-| Summarization      | facebook/bart-large-cnn    | ~1.6GB |
-
-All models cached locally after first download.
-
-## Performance
-
-- **Language Detection**: <1s
-- **Translation**: 1-3s per article
-- **Summarization**: 1-2s per article
-- **Total Pipeline**: 10-30s per article (after models cached)
+---
 
 ## Use Case
 
-Initially developed to address news accessibility in Lebanon's trilingual ecosystem (Arabic/English/French), but designed to work for any multilingual news region.
+**Primary Applications:**
+
+1. **Cross-Language Accessibility:** Developed for Lebanon's trilingual news ecosystem (Arabic/English/French) where important information is scattered across language-specific sources. Breaks down language barriers to ensure everyone can access critical news regardless of which language it was published in.
+
+2. **Time-Efficient News Consumption:** Condenses lengthy articles into concise summaries (30-200 words), enabling busy professionals, students, and readers to stay informed without reading full articles. What takes 10 minutes to read is reduced to 30 seconds.
+
+**Applicable to:** Any multilingual region, international organizations, news aggregation platforms, or anyone needing quick access to information across language barriers.
+
+---
 
 ## Author
 
-[Perla Thebian] - [GitHub](https://github.com/perlathebian)
+Perla Thebian - [GitHub](https://github.com/perlathebian)
+
+---
+
+**Built with:** Python • HuggingFace • Streamlit • SQLite • GitHub Actions
