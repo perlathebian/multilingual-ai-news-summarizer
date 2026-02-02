@@ -537,26 +537,35 @@ if page == "Summarizer":
             help="Paste a URL from Naharnet, MTV Lebanon, or Beirut Today"
         )
     
-        # Options in two columns
-        opt_col1, opt_col2 = st.columns(2)
-    
-        with opt_col1:
-            # Force refresh checkbox
-            force_refresh = st.checkbox(
-                "Force Refresh",
-                help="Bypass cache and reprocess article"
-            )
-    
-        with opt_col2:
-            # Summary length slider - in WORDS (user-friendly)
-            summary_words = st.slider(
-                "Summary Length (words)",
-                min_value=30,
-                max_value=200,
-                value=100,
-                step=10,
-                help="Desired number of words in summary. Actual length may vary slightly as the AI completes sentences naturally."
-            )
+    # Options in three columns
+    opt_col1, opt_col2, opt_col3 = st.columns(3)
+
+    with opt_col1:
+        # Force refresh checkbox
+        force_refresh = st.checkbox(
+            "Force Refresh",
+            help="Bypass cache and reprocess article"
+        )
+
+    with opt_col2:
+        # Summary length slider - in WORDS (user-friendly)
+        summary_words = st.slider(
+            "Summary Length (words)",
+            min_value=30,
+            max_value=200,
+            value=100,
+            step=10,
+            help="Desired number of words in summary. Actual length may vary slightly as the AI completes sentences naturally."
+        )
+
+    with opt_col3:
+        # Output language selector
+        output_language = st.selectbox(
+            "Summary Language",
+            options=['en', 'ar', 'fr'],
+            format_func=lambda x: {'en': 'EN English', 'ar': 'AR Arabic', 'fr': 'FR French'}[x],
+            help="Choose the language for the final summary"
+        )
     
         # Summarize button
         summarize_button = st.button(
@@ -638,7 +647,8 @@ if page == "Summarizer":
                         result = process_article_with_cache(
                             article, 
                             force_refresh=force_refresh,
-                            summary_max_length=summary_tokens 
+                            summary_max_length=summary_tokens,
+                            output_language=output_language 
                         )
                         process_time = time.time() - process_start
                 
@@ -692,9 +702,13 @@ if page == "Summarizer":
                             st.divider()
                         
                             # Summary section
-                            st.markdown("#### 📝 Summary")
+                            summary_lang = result.get('summary_language', 'en')
+                            lang_flag = {'en': 'EN', 'ar': 'AR', 'fr': 'FR'}.get(summary_lang, '🌍')
+                            lang_name = SUPPORTED_LANGUAGES.get(summary_lang, 'Unknown')
+
+                            st.markdown(f"#### 📝 Summary ({lang_flag} {lang_name})")
                             st.write(result['summary'])
-                        
+
                             # Word count - show requested vs actual
                             actual_words = len(result['summary'].split())
                             st.caption(f"📊 Requested: {summary_words} words | Actual: ~{actual_words} words")

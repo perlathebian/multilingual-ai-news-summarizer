@@ -50,6 +50,8 @@ SUMMARIZATION_MODEL = 'facebook/bart-large-cnn'
 # Global variables to cache loaded models (avoid reloading)
 _translator_ar = None
 _translator_fr = None
+_translator_en_ar = None  
+_translator_en_fr = None  
 _summarizer = None
 
 
@@ -168,6 +170,74 @@ def translate_to_english(text, source_language):
         print(f"   Returning original text")
         return text
 
+def translate_from_english(text, target_language):
+    """
+    Translate English text to target language.
+    
+    Args:
+        text (str): English text to translate
+        target_language (str): Target language code ('ar' for Arabic, 'fr' for French)
+        
+    Returns:
+        str: Translated text, or original if error or target is 'en'
+    """
+    global _translator_en_ar, _translator_en_fr
+    
+    # If target is English, return as-is
+    if target_language == 'en':
+        return text
+    
+    # Skip if text is empty
+    if not text or len(text.strip()) == 0:
+        return text
+    
+    try:
+        # Arabic
+        if target_language == 'ar':
+            if _translator_en_ar is None:
+                print(f"Loading English_to_Arabic translator...")
+                _translator_en_ar = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ar")
+                print(f"English to Arabic translator loaded")
+            
+            translator = _translator_en_ar
+        
+        # French
+        elif target_language == 'fr':
+            if _translator_en_fr is None:
+                print(f"Loading English_to_French translator...")
+                _translator_en_fr = pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr")
+                print(f"English to French translator loaded")
+            
+            translator = _translator_en_fr
+        
+        else:
+            print(f"Unsupported target language: {target_language}")
+            return text
+        
+        print(f"Translating to {SUPPORTED_LANGUAGES.get(target_language, target_language)}...")
+        
+        # Chunk text if too long (max 512 tokens)
+        if len(text) > 2000:
+            # Split into chunks
+            chunks = [text[i:i+2000] for i in range(0, len(text), 2000)]
+            translated_chunks = []
+            
+            for chunk in chunks:
+                result = translator(chunk, max_length=512)
+                translated_chunks.append(result[0]['translation_text'])
+            
+            translated = ' '.join(translated_chunks)
+        else:
+            result = translator(text, max_length=512)
+            translated = result[0]['translation_text']
+        
+        print(f"Translation complete")
+        return translated
+        
+    except Exception as e:
+        print(f"Reverse translation error: {e}")
+        print(f"   Returning original English text")
+        return text
 
 def summarize_text(text, max_length=150, min_length=50):
     """
@@ -331,7 +401,7 @@ def process_article(article_data, output_language='en', summary_max_length=150):
     
     return result
 
-def process_article_with_cache(article_data, force_refresh=False, summary_max_length=150):
+def process_article_with_cache(article_data, force_refresh=False, summary_max_length=150, output_language='en'):
     """
     Process article with database caching.
     
@@ -384,10 +454,21 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
     print('─'*70)
     
     result = process_article(article_data, summary_max_length=summary_max_length)
-    
+
     if not result:
         print("Processing failed")
         return None
+
+    # If user wants summary in different language, translate it
+    if output_language != 'en' and result.get('summary'):
+        print(f"\n{'─'*70}")
+        print(f"TRANSLATING SUMMARY TO {SUPPORTED_LANGUAGES.get(output_language, output_language).upper()}")
+        print('─'*70)
+    
+        result['summary'] = translate_from_english(result['summary'], output_language)
+        result['summary_language'] = output_language
+    else:
+        result['summary_language'] = 'en'
     
     # Save to cache
     print(f"\n{'─'*70}")

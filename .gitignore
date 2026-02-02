@@ -13,6 +13,7 @@ dist/
 
 # Database
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 
@@ -21,6 +22,7 @@ dist/
 
 # OS
 Thumbs.db
+.DS_Store
 
 # Streamlit
 .streamlit/
