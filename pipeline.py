@@ -17,6 +17,17 @@ import time
 from langdetect import detect, DetectorFactory
 from transformers import pipeline
 import db
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Console output
+        logging.FileHandler('logs/pipeline.log', mode='a')  # File output
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Set seed for consistent language detection results
 DetectorFactory.seed = 0
@@ -66,7 +77,7 @@ def detect_language(text):
         str: Language code ('ar', 'en', 'fr') or None if detection fails
     """
     if not text or len(text) < 10:
-        print("Text too short for language detection!!")
+        logger.warning("Text too short for language detection (< 10 chars)")
         return None
     
     try:
@@ -77,14 +88,14 @@ def detect_language(text):
         # Only return if it's a supported language
         if detected in SUPPORTED_LANGUAGES:
             lang_name = SUPPORTED_LANGUAGES[detected]
-            print(f"Detected language: {lang_name} ({detected})")
+            logger.info(f"Language detected: {lang_name} ({detected})")
             return detected
         else:
-            print(f"Detected unsupported language: {detected}")
+            logger.warning(f"Detected unsupported language: {detected}")
             return None
             
     except Exception as e:
-        print(f"Language detection error: {e}")
+        logger.error(f"Language detection error: {e}")
         return None
 
 
@@ -103,26 +114,25 @@ def translate_to_english(text, source_language):
     
     # If already English, return as-is
     if source_language == 'en':
-        print("Text already in English, no translation needed")
+        logger.info("Text already in English, skipping translation")
         return text
     
     # Validate supported languages
     if source_language not in ['ar', 'fr']:
-        print(f"Unsupported source language: {source_language}")
+        logger.warning(f"Unsupported source language: {source_language}")
         return text
     
     try:
         # Arabic -> English
         if source_language == 'ar':
             if _translator_ar is None:
-                print(f"Loading Arabic_to_English model (first time only, ~5 min)...")
-                print(f"   Model: {TRANSLATION_MODELS['ar']}")
+                logger.info(f"Loading Arabic_to_English model: {TRANSLATION_MODELS['ar']}")
                 start_time = time.time()
                 _translator_ar = pipeline("translation", model=TRANSLATION_MODELS['ar'])
                 elapsed = time.time() - start_time
-                print(f"Model loaded in {elapsed:.1f} seconds")
+                logger.info(f"Arabic_to_English model loaded in {elapsed:.1f}s")
             
-            print("Translating Arabic to English...")
+            logger.info("Translating Arabic to English")
             # Translate in chunks if text is long (model has max length)
             if len(text) > 500:
                 # Split into chunks and translate
@@ -136,20 +146,19 @@ def translate_to_english(text, source_language):
                 result = _translator_ar(text, max_length=512)
                 translated = result[0]['translation_text']
             
-            print(f"Translation complete ({len(translated)} chars)")
+            logger.info(f"Arabic→English translation complete ({len(translated)} chars)")
             return translated
         
         # French -> English
         elif source_language == 'fr':
             if _translator_fr is None:
-                print(f"Loading French_to_English model (first time only, ~5 min)...")
-                print(f"   Model: {TRANSLATION_MODELS['fr']}")
+                logger.info(f"Loading French_to_English model: {TRANSLATION_MODELS['fr']}")
                 start_time = time.time()
                 _translator_fr = pipeline("translation", model=TRANSLATION_MODELS['fr'])
                 elapsed = time.time() - start_time
-                print(f"Model loaded in {elapsed:.1f} seconds")
+                logger.info(f"French_to_English model loaded in {elapsed:.1f}s")
             
-            print("Translating French to English...")
+            logger.info("Translating French to English")
             # Translate in chunks if text is long
             if len(text) > 500:
                 chunks = [text[i:i+500] for i in range(0, len(text), 500)]
@@ -162,12 +171,11 @@ def translate_to_english(text, source_language):
                 result = _translator_fr(text, max_length=512)
                 translated = result[0]['translation_text']
             
-            print(f"Translation complete ({len(translated)} chars)")
+            logger.info(f"French→English translation complete ({len(translated)} chars)")
             return translated
             
     except Exception as e:
-        print(f"Translation error: {e}")
-        print(f"   Returning original text")
+        logger.error(f"Translation error: {e} — returning original text")
         return text
 
 def translate_from_english(text, target_language):
@@ -195,26 +203,26 @@ def translate_from_english(text, target_language):
         # Arabic
         if target_language == 'ar':
             if _translator_en_ar is None:
-                print(f"Loading English_to_Arabic translator...")
+                logger.info("Loading English_to_Arabic translator")
                 _translator_en_ar = pipeline("translation", model="Helsinki-NLP/opus-mt-en-ar")
-                print(f"English to Arabic translator loaded")
+                logger.info("English_to_Arabic translator loaded")
             
             translator = _translator_en_ar
         
         # French
         elif target_language == 'fr':
             if _translator_en_fr is None:
-                print(f"Loading English_to_French translator...")
+                logger.info("Loading English_to_French translator")
                 _translator_en_fr = pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr")
-                print(f"English to French translator loaded")
+                logger.info("English_to_French translator loaded")
             
             translator = _translator_en_fr
         
         else:
-            print(f"Unsupported target language: {target_language}")
+            logger.warning(f"Unsupported target language: {target_language}")
             return text
         
-        print(f"Translating to {SUPPORTED_LANGUAGES.get(target_language, target_language)}...")
+        logger.info(f"Translating English to {SUPPORTED_LANGUAGES.get(target_language, target_language)}")
         
         # Chunk text if too long (max 512 tokens)
         if len(text) > 2000:
@@ -231,12 +239,11 @@ def translate_from_english(text, target_language):
             result = translator(text, max_length=512)
             translated = result[0]['translation_text']
         
-        print(f"Translation complete")
+        logger.info("Reverse translation complete")
         return translated
         
     except Exception as e:
-        print(f"Reverse translation error: {e}")
-        print(f"   Returning original English text")
+        logger.error(f"Reverse translation error: {e} — returning original English text")
         return text
 
 def summarize_text(text, max_length=150, min_length=50):
@@ -255,31 +262,28 @@ def summarize_text(text, max_length=150, min_length=50):
     
     # Don't summarize very short text
     if len(text) < 200:
-        print("Text too short for summarization (< 200 chars)")
+        logger.warning("Text too short for summarization (< 200 chars)")
         return text
     
     try:
         # Load model on first use (cached after that)
         if _summarizer is None:
-            print(f"Loading summarization model (first time only, ~10 min)...")
-            print(f"   Model: {SUMMARIZATION_MODEL}")
+            logger.info(f"Loading summarization model: {SUMMARIZATION_MODEL}")
             start_time = time.time()
             _summarizer = pipeline("summarization", model=SUMMARIZATION_MODEL)
             elapsed = time.time() - start_time
-            print(f"Model loaded in {elapsed:.1f} seconds")
+            logger.info(f"Summarization model loaded in {elapsed:.1f}s")
         
         # Bart has a max input length of ~1024 tokens (~4000 chars)
         # If text is longer, truncate it
         if len(text) > 4000:
-            print(f"   Text is long, using first 4000 characters")
+            logger.info("Text truncated to 4000 chars for BART input limit")
             text = text[:4000]
         
         # Calculate smart min_length (at least 70% of max_length to force longer summaries)
         smart_min_length = max(min_length, int(max_length * 0.9))
 
-        print(f"Generating summary...")
-        print(f"   Input length: {len(text)} characters")
-        print(f"   Target length: {smart_min_length}-{max_length} tokens")
+        logger.info(f"Generating summary — input: {len(text)} chars, target: {smart_min_length}-{max_length} tokens")
 
         # Generate summary
         result = _summarizer(text, max_length=max_length, min_length=smart_min_length, do_sample=False)
@@ -288,12 +292,11 @@ def summarize_text(text, max_length=150, min_length=50):
         # Count words in summary
         word_count = len(summary.split())
 
-        print(f"Summary generated ({len(summary)} characters, ~{word_count} words)")
+        logger.info(f"Summary generated: {len(summary)} chars (~{word_count} words)")
         return summary
         
     except Exception as e:
-        print(f"Summarization error: {e}")
-        print(f"   Returning original text")
+        logger.error(f"Summarization error: {e} — returning original text")
         return text
 
 
@@ -325,7 +328,7 @@ def process_article(article_data, output_language='en', summary_max_length=150):
               Returns None if processing fails
     """
     # DEBUG
-    print(f"process_article received: summary_max_length={summary_max_length}")
+    logger.info(f"process_article called: summary_max_length={summary_max_length}")
 
     print("\n" + "="*70)
     print("PROCESSING ARTICLE THROUGH AI PIPELINE")
@@ -335,7 +338,7 @@ def process_article(article_data, output_language='en', summary_max_length=150):
     
     # Validate input
     if not article_data or 'text' not in article_data:
-        print("Invalid article data")
+        logger.error("Invalid article data — missing 'text' field")
         return None
     
     # Initialize result
@@ -420,8 +423,8 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
               Returns None if processing fails
     """
     # DEBUG
-    print(f"process_article_with_cache received: summary_max_length={summary_max_length}")
     url = article_data.get('url')
+    logger.info(f"process_article_with_cache called: url={url[:60]}, summary_max_length={summary_max_length}")
     
     if not url:
         print("No URL provided in article data")
@@ -438,15 +441,15 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
         cached = db.get_cached_article(url)
         
         if cached:
-            print(f"Cache Hit - Returning cached result")
+            logger.info(f"Cache HIT for URL: {url[:60]}")
             print(f"   Title: {cached['title'][:50]}...")
             print(f"   Cached on: {cached['date_processed'][:19]}")
             print(f"   Processing time saved: ~2-5 seconds")
             return cached
         else:
-            print(f"Cache Miss - Article not in cache")
+            logger.info(f"Cache MISS for URL: {url[:60]}")
     else:
-        print(f"Force refresh enabled - Reprocessing article")
+        logger.info(f"Force refresh enabled for URL: {url[:60]}")
     
     # Not cached or force refresh then process article
     print(f"\n{'─'*70}")
@@ -456,7 +459,7 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
     result = process_article(article_data, summary_max_length=summary_max_length)
 
     if not result:
-        print("Processing failed")
+        logger.error("AI pipeline processing failed")
         return None
 
     # If user wants summary in different language, translate it
@@ -492,9 +495,9 @@ def process_article_with_cache(article_data, force_refresh=False, summary_max_le
     saved = db.save_article(result)
 
     if saved:
-        print(f"Result cached for future requests")
+        logger.info("Result saved to cache successfully")
     else:
-        print(f"Failed to cache (may already exist)")
+        logger.warning("Failed to cache result — may already exist")
 
     print(f"\n{'─'*70}")    
     

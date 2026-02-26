@@ -5,6 +5,10 @@ Web scraper for extracting news articles from news sources.
 import requests
 from bs4 import BeautifulSoup
 import time
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # User-Agent to identify myself to the website
 HEADERS = {
@@ -29,7 +33,7 @@ def _fetch_and_parse(url):
     try:
         time.sleep(3)  # Rate limiting - respectful
         
-        print(f"Fetching: {url}")
+        logger.info(f"Fetching URL: {url}")
         response = requests.get(url, headers=HEADERS, timeout=100)
         response.raise_for_status()
         
@@ -37,16 +41,16 @@ def _fetch_and_parse(url):
         return soup
         
     except requests.exceptions.Timeout:
-        print(f"Timeout: Server took too long to respond")
+        logger.warning(f"Timeout fetching URL: {url}")
         return None
     except requests.exceptions.HTTPError as e:
-        print(f"HTTP Error: {e}")
+        logger.error(f"HTTP Error fetching {url}: {e}")
         return None
     except requests.exceptions.RequestException as e:
-        print(f"Request Error: {e}")
+        logger.error(f"Request error fetching {url}: {e}")
         return None
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        logger.error(f"Unexpected error fetching {url}: {e}")
         return None
 
 def _extract_paragraphs(container, min_length=50):
@@ -85,16 +89,10 @@ def _validate_and_report(article_data, source_name):
         dict: article_data if valid, None if invalid
     """
     if article_data['title'] and article_data['text']:
-        print(f"Successfully extracted from {source_name}")
-        print(f"   Title: {article_data['title'][:60]}...")
-        print(f"   Text length: {len(article_data['text']):,} characters")
-        if article_data['date']:
-            print(f"   Date: {article_data['date']}")
+        logger.info(f"Successfully extracted from {source_name}: '{article_data['title'][:60]}' ({len(article_data['text']):,} chars)")
         return article_data
     else:
-        print(f"Failed to extract from {source_name}")
-        print(f"   Title found: {bool(article_data['title'])}")
-        print(f"   Text found: {bool(article_data['text'])}")
+        logger.warning(f"Failed to extract from {source_name} - title found: {bool(article_data['title'])}, text found: {bool(article_data['text'])}")
         return None
 
 # SITE-SPECIFIC SCRAPER FUNCTIONS
@@ -239,8 +237,7 @@ def get_article(url):
     elif 'beirut-today.com' in url:
         return scrape_beirut_today(url)
     else:
-        print(f"Unsupported site: {url}")
-        print(f"   Supported sites: Naharnet, MTV Lebanon, Beirut Today")
+        logger.warning(f"Unsupported site: {url}. Supported: Naharnet, MTV Lebanon, Beirut Today")
         return None
 
 def clean_text(text):

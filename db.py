@@ -8,6 +8,9 @@ Prevents redundant API calls and provides instant retrieval of cached content.
 import sqlite3
 from datetime import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DB_NAME = 'articles.db'
@@ -56,7 +59,7 @@ def init_db():
     conn.commit()
     conn.close()
     
-    print(f"Database initialized: {DB_PATH}")
+    logger.info(f"Database initialized: {DB_PATH}")
 
 
 def save_article(article_data):
@@ -77,7 +80,7 @@ def save_article(article_data):
     
     for field in required_fields:
         if field not in article_data or not article_data[field]:
-            print(f"Missing required field: {field}")
+            logger.error(f"Missing required field for save_article: {field}")
             return False
     
     try:
@@ -104,15 +107,15 @@ def save_article(article_data):
         conn.commit()
         conn.close()
         
-        print(f"Article saved to cache: {article_data['title'][:50]}...")
+        logger.info(f"Article cached: '{article_data['title'][:50]}'")
         return True
         
     except sqlite3.IntegrityError:
         # URL already exists in database
-        print(f"Article already in cache: {article_data['url'][:50]}...")
+        logger.info(f"Article already in cache: {article_data['url'][:50]}")
         return False
     except Exception as e:
-        print(f"Error saving to database: {e}")
+        logger.error(f"Error saving to database: {e}")
         return False
 
 
@@ -152,14 +155,14 @@ def get_cached_article(url):
                 'date_processed': row['date_processed'],
                 'processing_time': row['processing_time']
             }
-            print(f"Cache hit: {article['title'][:50]}...")
+            logger.info(f"Cache hit: '{article['title'][:50]}'")
             return article
         else:
-            print(f"Cache miss: {url[:50]}...")
+            logger.info(f"Cache miss: {url[:50]}")
             return None
             
     except Exception as e:
-        print(f"Error retrieving from cache: {e}")
+        logger.error(f"Error retrieving from cache: {e}")
         return None
 
 
@@ -187,7 +190,7 @@ def article_exists(url):
         return count > 0
         
     except Exception as e:
-        print(f"Error checking cache: {e}")
+        logger.error(f"Error checking cache: {e}")
         return False
 
 
@@ -240,7 +243,7 @@ def get_all_articles(limit=None):
         return articles
         
     except Exception as e:
-        print(f"Error getting articles: {e}")
+        logger.error(f"Error getting all articles: {e}")
         return []
 
 
@@ -284,7 +287,7 @@ def get_cache_stats():
         }
         
     except Exception as e:
-        print(f"Error getting stats: {e}")
+        logger.error(f"Error getting cache stats: {e}")
         return {'total_articles': 0, 'by_language': {}, 'by_source': {}}
 
 
@@ -310,11 +313,11 @@ def clear_cache():
         conn.commit()
         conn.close()
         
-        print(f"Cache cleared: {count} articles deleted")
+        logger.info(f"Cache cleared: {count} articles deleted")
         return count
         
     except Exception as e:
-        print(f"Error clearing cache: {e}")
+        logger.error(f"Error clearing cache: {e}")
         return 0
 
 
