@@ -134,6 +134,44 @@ Processing time: 86.41s
 
 ---
 
+## Architecture
+
+```
+Naharnet / MTV Lebanon / Beirut Today
+              │
+              ▼
+    Web Scraper (BeautifulSoup)
+    [scraper.py — site-specific parsers]
+              │
+              ▼
+    Language Detection (LangDetect)
+              │
+              ├─[cache hit]──→ SQLite Cache → Return Summary (0.01s)
+              │
+              ▼
+    [ar/fr only] Helsinki-NLP Translation → English
+              │
+              ▼
+    BART Summarization (facebook/bart-large-cnn)
+    [pipeline.py]
+              │
+              ▼
+    [optional] Translate Summary to Output Language
+              │
+              ▼
+    SQLite Cache Write + Return to User
+    [db.py — CRUD operations]
+```
+
+**Pipeline files:**
+
+- `scraper.py`: site-specific parsers with shared helper functions
+- `pipeline.py`: language detection, translation, summarization, caching logic
+- `db.py`: SQLite CRUD layer with cache hit/miss logic
+- `app.py`: Streamlit interface calling the pipeline
+
+---
+
 ## Tech Stack
 
 **Backend:** Python 3.11, Beautiful Soup, Requests, SQLite  
@@ -148,8 +186,8 @@ Processing time: 86.41s
 
 ### Main Summarizer Interface
 
-![Summarizer](summarizer-fr.png)
-![Summarizer](summarizer-ar.png)
+![Summarizer French Output](summarizer-fr.png)
+![Summarizer ARabic Output](summarizer-ar.png)
 
 ### Cache Explorer Dashboard
 
@@ -199,6 +237,27 @@ Processing time: 86.41s
 - French Translation: ~300MB
 - Summarization: ~1.6GB
 - **Total:** ~2.2GB (downloaded once, cached forever)
+
+---
+
+## Logging & Error Handling
+
+All pipeline activity is logged with timestamps to `logs/pipeline.log`:
+
+- URL received and scraping start
+- Language detected (ar/en/fr)
+- Cache hit or miss
+- Translation triggered (language pair + model load time)
+- Summarization start and completion (input length, output word count)
+- Processing errors with full context
+
+**User-facing error handling in the Streamlit UI:**
+
+- Network/timeout errors: clear retry message
+- HTTP 403/404: specific troubleshooting guidance
+- Unsupported news source: lists supported domains
+- Failed scrape: tips for verifying URL and article availability
+- Technical details available in collapsible debug expander
 
 ---
 
