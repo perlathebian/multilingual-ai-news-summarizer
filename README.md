@@ -11,6 +11,8 @@ Transform news articles from Arabic, English, or French into concise summaries i
 
 ---
 
+**Demo Video:** [Watch Demo](https://onedrive.live.com/?photosData=%2Fshare%2FFE2FB007F7F25E16%21s892eb1b0f5b04727864b5381d885e21d%3Fithint%3Dvideo%26e%3DhUHHqJ%26migratedtospo%3Dtrue&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3YvYy9mZTJmYjAwN2Y3ZjI1ZTE2L0lRQ3dzUzZKc1BVblI0WkxVNEhZaGVJZEFTblJWYkNjZ21fbmthb0RUVXBDLVlFP2U9aFVISHFK&view=8)
+
 ## Problem & Solution
 
 **Problem:** In multilingual regions, news sources publish in different languages, creating accessibility barriers.
