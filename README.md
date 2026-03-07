@@ -11,7 +11,7 @@ Transform news articles from Arabic, English, or French into concise summaries i
 
 ---
 
-**Demo Video:** [Watch Demo](https://1drv.ms/v/c/fe2fb007f7f25e16/IQBRA35ggJ5jQ7mnYNIaQoFcAYfj_3eKem99hGi3fyMz64w?e=q2Vmzh)
+**Demo Video:** [Watch Demo](https://1drv.ms/v/c/fe2fb007f7f25e16/IQBRA35ggJ5jQ7mnYNIaQoFcAYfj_3eKem99hGi3fyMz64w)
 
 ## Problem & Solution
 
